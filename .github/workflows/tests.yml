@@ -66,15 +66,16 @@ jobs:
           merge-artifacts: true
           path: combined_results
 
-      - name: Combine Results (Optional - nếu cần)
+      - name: Combine Results
         run: |
           cd combined_results
-          # Thêm logic để kết hợp các file results.csv lại thành một file duy nhất (nếu cần)
-          # Ví dụ: cat */results.csv >> combined-results.csv
-          echo "Kết hợp các file results.csv (nếu cần)"
+          find . -name "results.csv" -print0 | while IFS= read -r -d $'\0' file; do
+            cat "$file" >> combined-results.csv
+          done
+          echo "Đã kết hợp tất cả các file results.csv vào combined-results.csv"
 
       - name: Upload Combined Results
         uses: actions/upload-artifact@v3
         with:
           name: combined-results
-          path: combined_results
+          path: combined_results/combined-results.csv
