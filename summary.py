@@ -39,6 +39,13 @@ if __name__ == "__main__":
     thoi_gian, truck_routes, drone_routes = extract_data(output)
     route = f"Truck: {truck_routes} || Drone: {drone_routes}"
 
+    # Extract dataset name from job_name
+    dataset_name_match = re.search(r"Solve D2D for (.*?) with", job_name)
+    if dataset_name_match:
+        dataset_name = dataset_name_match.group(1)
+    else:
+        dataset_name = "N/A"  # Or some default value
+
     csv_file = "results.csv"
     file_exists = os.path.exists(csv_file)
 
@@ -46,6 +53,6 @@ if __name__ == "__main__":
         writer = csv.writer(csvfile)
         if not file_exists:
             writer.writerow(["Dronetype", "Thoi Gian", "Route", "Job Name"])  # Write header if file is new
-        writer.writerow([dronetype, thoi_gian, route, job_name])
+        writer.writerow([dronetype, thoi_gian, route, dataset_name])
 
     print(f"Data appended to {csv_file}")

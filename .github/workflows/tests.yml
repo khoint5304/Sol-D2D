@@ -63,25 +63,40 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           pattern: individual-results-*
-          merge-artifacts: false # Không merge, để mỗi artifact ở thư mục riêng
+          merge-artifacts: false
+
+      - name: List Downloaded Files - Detailed
+        run: |
+          echo "Listing files in combined_results:"
+          find combined_results -print
 
       - name: Create Combined Results File with Header
         run: |
           echo "Dronetype,Thoi Gian,Route,Job Name" > combined_results.csv
+          echo "Created combined_results.csv with header."
 
-      - name: Combine Results
+      - name: Combine Results - Debugging
         run: |
-          find . -name "results.csv" -exec sh -c '
+          find combined_results -name "results.csv" -print0 | while IFS= read -r -d $'\0' file; do
+            echo "Processing file: $file"
+
             # Lấy thông tin từ tên artifact
-            artifact_name=$(dirname "{}")
+            artifact_name=$(basename $(dirname "$file"))
+            echo "Artifact name: $artifact_name"
             IFS="-" read -r -a parts <<< "$artifact_name"
+            echo "Parts: ${parts[@]}"
             problem="${parts[2]}"
             dronetype="${parts[3]}"
+            echo "Problem: $problem, Dronetype: $dronetype"
             job_name="Solve D2D for ${problem} with Dronetype ${dronetype}"
+            echo "Job Name: $job_name"
 
-            # Đọc dữ liệu từ file và thêm thông tin
-            tail -n +2 "{}" | awk -v dt="${dronetype}" -v jn="${job_name}" '{print dt","$0","jn}' >> combined_results.csv
-          ' \;
+            # Extract data row and add Dronetype and Job Name
+            echo "Processing data from $file"
+            awk -F',' 'NR==2 {print ENVIRON["DRONETYPE"], $2, $3, ENVIRON["PROBLEM"]}' ENVIRON[PROBLEM]="${problem}" "$file" >> combined_results.csv
+            echo "Appended data to combined_results.csv"
+            echo "-------------------------"
+          done
 
       - name: Upload Combined Results
         uses: actions/upload-artifact@v3
