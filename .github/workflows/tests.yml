@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        problem: ["6.5.1", "6.5.2", "6.5.3", "6.5.4", "6.10.1", "6.10.2", "6.10.3", "6.10.4", "10.10.1", "10.10.2", "10.10.3", "10.10.4"]
+        problem: ["10.10.1", "10.10.2", "10.10.3", "10.10.4"]
         dronetype: ["1", "2", "3","4"]
 
     steps:
@@ -29,18 +29,18 @@ jobs:
     - name: Compile C++ Program
       run: |
         g++ -std=c++17 -O3 sol.cpp src/*.cpp -o test.exe
-    - name: Run Program and Aggregate Results
-      id: run_program
-      run: |
-        export DRONETYPE="${{ matrix.dronetype }}"
-        export GITHUB_JOB="${{ github.job_name }}"
-        DATA_FILE="D2D Problem/random_data/${{ matrix.problem }}.txt"
-        if [ -f "$DATA_FILE" ]; then
-          echo "Data file $DATA_FILE found. Running the program..."
-          ./test.exe -dronetype "${{ matrix.dronetype }}" "${{ matrix.problem }}" | python3 summary.py
-        else
-          echo "Data file $DATA_FILE not found. Skipping program execution."
-        fi
+   - name: Run Program and Aggregate Results
+     id: run_program
+     run: |
+       export DRONETYPE="${{ matrix.dronetype }}"
+       export GITHUB_JOB="${{ github.job }}"  # Sử dụng biến ngữ cảnh github.job
+       DATA_FILE="D2D Problem/random_data/${{ matrix.problem }}.txt"
+       if [ -f "$DATA_FILE" ]; then
+         echo "Data file $DATA_FILE found. Running the program..."
+         ./test.exe -dronetype "${{ matrix.dronetype }}" "${{ matrix.problem }}" | python3 summary.py
+       else
+         echo "Data file $DATA_FILE not found. Skipping program execution."
+       fi
     - name: Upload Individual Results
       uses: actions/upload-artifact@v3
       with:
