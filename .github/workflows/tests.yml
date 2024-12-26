@@ -63,10 +63,10 @@ jobs:
 
       - name: Combine Results
         run: |
-          # Tạo file kết quả tổng hợp
+          # Tạo file kết quả tổng hợp với tiêu đề
           echo "Dronetype,Thoi Gian,Route,Problem" > combined_results.csv
 
-          # Duyệt qua tất cả các thư mục kết quả
+          # Duyệt qua tất cả thư mục chứa kết quả
           find . -maxdepth 1 -type d -name "individual-results-*" -print0 | while IFS= read -r -d $'\0' dir; do
             artifact_name=$(basename "$dir")
             IFS="-" read -r -a parts <<< "${artifact_name#individual-results-}"
@@ -74,16 +74,20 @@ jobs:
             dronetype="${parts[1]}"
             results_file="$dir/results.csv"
 
-            # Kiểm tra file kết quả và xử lý nội dung
+            # Kiểm tra file tồn tại và xử lý nội dung
             if [ -f "$results_file" ]; then
-              # Loại bỏ header và các dòng trống, chỉ giữ lại dòng dữ liệu hợp lệ
-              tail -n +2 "$results_file" | awk 'NF > 0' | while IFS= read -r line; do
-                echo "${dronetype},${line},${problem}" >> combined_results.csv
+              # Bỏ dòng tiêu đề, giữ nguyên nội dung còn lại
+              tail -n +2 "$results_file" | while IFS= read -r line; do
+                # Bỏ qua nếu dòng trống
+                if [ -n "$line" ]; then
+                  echo "${dronetype},${line},${problem}" >> combined_results.csv
+                fi
               done
             else
               echo "File $results_file does not exist. Skipping."
             fi
           done
+
 
 
       - name: Upload Combined Results
