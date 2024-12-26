@@ -32,6 +32,8 @@ if __name__ == "__main__":
     dronetype = os.environ.get("DRONETYPE")
     job_name = os.environ.get("GITHUB_JOB")
 
+    print(f"Debugging summary.py: GITHUB_JOB = '{job_name}'") # Thêm dòng này
+
     if dronetype is None or job_name is None:
         print("Error: DRONETYPE or GITHUB_JOB environment variable not set.")
         sys.exit(1)

@@ -59,24 +59,46 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      - name: Debug: Check current directory before download
+        run: pwd
+
       - name: Download All Individual Results
+        id: download_artifacts
         uses: actions/download-artifact@v3
         with:
           pattern: individual-results-*
           merge-artifacts: false
+          path: combined_results
+          if-not-exists: true
+
+      - name: Debug: List files after download
+        run: |
+          echo "Files and directories in the current directory after download:"
+          ls -la
+          echo "Files and directories in combined_results (if it exists):"
+          ls -la combined_results || true # In lỗi nếu thư mục không tồn tại
 
       - name: List Downloaded Files - Detailed
         run: |
-          echo "Listing files in combined_results:"
-          find combined_results -print
+          echo "Checking if combined_results directory exists..."
+          if [ -d "combined_results" ]; then
+            echo "combined_results directory exists."
+            echo "Listing files in combined_results:"
+            find combined_results -print
+          else
+            echo "combined_results directory does not exist!"
+          fi
+        shell: /usr/bin/bash -e {0}
 
       - name: Create Combined Results File with Header
         run: |
+          echo "Creating combined_results.csv with header..."
           echo "Dronetype,Thoi Gian,Route,Job Name" > combined_results.csv
-          echo "Created combined_results.csv with header."
+          echo "combined_results.csv created."
 
       - name: Combine Results - Debugging
         run: |
+          echo "Starting Combine Results - Debugging"
           find combined_results -name "results.csv" -print0 | while IFS= read -r -d $'\0' file; do
             echo "Processing file: $file"
 
@@ -97,6 +119,18 @@ jobs:
             echo "Appended data to combined_results.csv"
             echo "-------------------------"
           done
+          echo "Finished Combine Results - Debugging"
+
+      - name: Debug: Check if combined_results.csv was created
+        run: |
+          echo "Checking if combined_results.csv exists:"
+          if [ -f "combined_results.csv" ]; then
+            echo "combined_results.csv exists."
+            echo "Contents of combined_results.csv:"
+            cat combined_results.csv
+          else
+            echo "combined_results.csv does not exist!"
+          fi
 
       - name: Upload Combined Results
         uses: actions/upload-artifact@v3
