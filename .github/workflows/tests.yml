@@ -1,0 +1,46 @@
+name: C++ GA Testing
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  ga-test:
+    name: Solve D2D for ${{ matrix.problem }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        problem: ["6.5.1", "6.5.2", "6.5.3", "6.5.4", "6.10.1", "6.10.2", "6.10.3", "6.10.4", "10.10.1", "10.10.2", "10.10.3", "10.10.4"]
+        dronetype: ["1", "2", "3","4"]
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y g++ make
+
+    - name: Setup Data Directories
+      run: |
+        mkdir -p "D2D Problem/random_data"
+
+    - name: Compile C++ Program
+      run: |
+        g++ -std=c++17  -O3 sol.cpp src/*.cpp -o test.exe
+
+    - name: Run Program
+      run: |
+        PROBLEM_NAME="${{ matrix.problem }}"
+        DRONE_TYPE = "${{ matrix.dronetype }}"
+        DATA_FILE="D2D Problem/random_data/${PROBLEM_NAME}.txt"
+
+        if [ -f "$DATA_FILE" ]; then
+          echo "Data file $DATA_FILE found. Running the program..."
+          ./test.exe -dronetype "DRONE_TYPE" "$PROBLEM_NAME"
+        else
+          echo "Data file $DATA_FILE not found. Skipping program execution."
+        fi
