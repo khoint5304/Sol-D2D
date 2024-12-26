@@ -30,17 +30,15 @@ jobs:
 
     - name: Compile C++ Program
       run: |
-        g++ -std=c++17  -O3 sol.cpp src/*.cpp -o test.exe
+        g++ -std=c++17 -O3 sol.cpp src/*.cpp -o test.exe
 
     - name: Run Program
       run: |
-        PROBLEM_NAME="${{ matrix.problem }}"
-        DRONE_TYPE = "${{ matrix.dronetype }}"
-        DATA_FILE="D2D Problem/random_data/${PROBLEM_NAME}.txt"
+        DATA_FILE="D2D Problem/random_data/${{ matrix.problem }}.txt"
 
         if [ -f "$DATA_FILE" ]; then
           echo "Data file $DATA_FILE found. Running the program..."
-          ./test.exe -dronetype "DRONE_TYPE" "$PROBLEM_NAME"
+          ./test.exe -dronetype "${{ matrix.dronetype }}" "${{ matrix.problem }}"
         else
           echo "Data file $DATA_FILE not found. Skipping program execution."
         fi
