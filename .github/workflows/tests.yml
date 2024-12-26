@@ -63,7 +63,7 @@ jobs:
 
       - name: Combine Results
         run: |
-          # Tạo file kết quả tổng hợp với tiêu đề
+          # Tạo file tổng hợp với tiêu đề chính xác
           echo "Dronetype,Thoi Gian,Route,Problem" > combined_results.csv
 
           # Duyệt qua tất cả thư mục chứa kết quả
@@ -74,12 +74,12 @@ jobs:
             dronetype="${parts[1]}"
             results_file="$dir/results.csv"
 
-            # Kiểm tra file tồn tại và xử lý nội dung
+            # Kiểm tra file tồn tại
             if [ -f "$results_file" ]; then
-              # Bỏ dòng tiêu đề, giữ nguyên nội dung còn lại
+              # Đọc từng dòng và bỏ qua các dòng trống hoặc không hợp lệ
               tail -n +2 "$results_file" | while IFS= read -r line; do
-                # Bỏ qua nếu dòng trống
-                if [ -n "$line" ]; then
+                # Kiểm tra nếu dòng hợp lệ (có ít nhất 2 dấu phẩy)
+                if [[ -n "$line" && "$(echo "$line" | grep -o ',' | wc -l)" -ge 2 ]]; then
                   echo "${dronetype},${line},${problem}" >> combined_results.csv
                 fi
               done
