@@ -45,16 +45,36 @@ jobs:
           echo "Data file $DATA_FILE not found. Skipping program execution."
         fi
 
+    - name: Upload Individual Results
+      uses: actions/upload-artifact@v3
+      with:
+        name: individual-results-${{ matrix.problem }}-${{ matrix.dronetype }}
+        path: results.csv
+
   upload-results:
     name: Upload Combined Results
     runs-on: ubuntu-latest
     needs: ga-test
     steps:
-      - name: Checkout Repository (again)
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Upload Results
+      - name: Download All Individual Results
+        uses: actions/download-artifact@v3
+        with:
+          pattern: individual-results-*
+          merge-artifacts: true
+          path: combined_results
+
+      - name: Combine Results (Optional - nếu cần)
+        run: |
+          cd combined_results
+          # Thêm logic để kết hợp các file results.csv lại thành một file duy nhất (nếu cần)
+          # Ví dụ: cat */results.csv >> combined-results.csv
+          echo "Kết hợp các file results.csv (nếu cần)"
+
+      - name: Upload Combined Results
         uses: actions/upload-artifact@v3
         with:
           name: combined-results
-          path: results.csv
+          path: combined_results
