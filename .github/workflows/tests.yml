@@ -74,7 +74,8 @@ jobs:
             dronetype="${parts[1]}"
             results_file="$dir/results.csv"
             if [ -f "$results_file" ]; then
-              tail -n +2 "$results_file" | awk 'NF > 0' | awk -v dt="${dronetype}" -v pb="${problem}" '{print dt","$0","pb}' >> combined_results.csv
+              # Lọc và bỏ các dòng trống trước khi ghi vào file kết quả
+              tail -n +2 "$results_file" | awk 'NF > 0 {print}' | awk -v dt="${dronetype}" -v pb="${problem}" '{print dt","$0","pb}' >> combined_results.csv
             else
               echo "File $results_file does not exist. Skipping."
             fi

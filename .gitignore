@@ -2,3 +2,5 @@
 .vscode/
 run.bat
 *.exe
+*.csv
+*.zip
