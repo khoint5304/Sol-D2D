@@ -6,7 +6,7 @@ on:
 
 jobs:
   ga-test:
-    name: Solve D2D for ${{ matrix.problem }} - Drone ${{ matrix.dronetype }}
+    name: Solve D2D for ${{ matrix.problem }} with Dronetype ${{ matrix.dronetype }}
     runs-on: ubuntu-latest
 
     strategy:
@@ -30,50 +30,64 @@ jobs:
 
     - name: Compile C++ Program
       run: |
-        g++ -std=c++17  -O3 sol.cpp src/*.cpp -o test.exe
+        g++ -std=c++17 -O3 sol.cpp src/*.cpp -o test.exe
 
-    - name: Run Program and Save Result
+    - name: Run Program and Capture Output
+      id: run_program
       run: |
-        PROBLEM_NAME="${{ matrix.problem }}"
-        DRONE_TYPE="${{ matrix.dronetype }}"
-        DATA_FILE="D2D Problem/random_data/${PROBLEM_NAME}.txt"
-        OUTPUT_FILE="result_${PROBLEM_NAME}_${DRONE_TYPE}.csv"
-
+        DATA_FILE="D2D Problem/random_data/${{ matrix.problem }}.txt"
         if [ -f "$DATA_FILE" ]; then
-          echo "Running program for $PROBLEM_NAME with drone type $DRONE_TYPE..."
-          ./test.exe -dronetype "$DRONE_TYPE" "$PROBLEM_NAME" > "$OUTPUT_FILE"
-          echo "Result saved to $OUTPUT_FILE"
+          echo "Data file $DATA_FILE found. Running the program..."
+          output=$("./test.exe -dronetype ${{ matrix.dronetype }} ${{ matrix.problem }}" 2>&1)
+          echo "OUTPUT_START<<EOF" >> $GITHUB_STEP_SUMMARY
+          echo "$output" >> $GITHUB_STEP_SUMMARY
+          echo "EOF" >> $GITHUB_STEP_SUMMARY
+          echo "output<<EOF" >> $GITHUB_OUTPUT
+          echo "$output" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
         else
           echo "Data file $DATA_FILE not found. Skipping program execution."
-          echo "problem,dronetype,error" > "$OUTPUT_FILE"
-          echo "$PROBLEM_NAME,$DRONE_TYPE,data_file_not_found" >> "$OUTPUT_FILE"
+          echo "output<<EOF" >> $GITHUB_OUTPUT
+          echo "Data file not found" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
         fi
 
-    - name: Upload Result Artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: results
-        path: result_*.csv
-
-  aggregate-results:
-    name: Aggregate Results
-    needs: ga-test
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Download All Artifacts
-      uses: actions/download-artifact@v3
-      with:
-        name: results
-        path: all_results
-
-    - name: Combine Results into Single CSV
+    - name: Extract Results and Append to CSV
+      if: steps.run_program.outputs.output != 'Data file not found'
       run: |
-        cd all_results
-        awk 'FNR == 1 && NR > 1 { next } { print }' *.csv > combined_results.csv
-        
-    - name: Upload Combined Results Artifact
+        OUTPUT="${{ steps.run_program.outputs.output }}"
+        DRONETYPE="${{ matrix.dronetype }}"
+        JOB_NAME="${{ github.job }}"
+
+        # Extract thời gian hoàn thiện
+        THOI_GIAN=$(echo "$OUTPUT" | grep "Minimum completion time:" | awk '{print $4}')
+        if [ -z "$THOI_GIAN" ]; then
+          THOI_GIAN="N/A"
+        fi
+
+        # Extract truck routes
+        TRUCK_ROUTES=$(echo "$OUTPUT" | sed -n '/Truck routes:/,/Drone routes:/p' | sed '1d;$d')
+        TRUCK_ROUTES=$(echo "$TRUCK_ROUTES" | tr '\n' ';' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+        if [ -z "$TRUCK_ROUTES" ]; then
+          TRUCK_ROUTES="N/A"
+        fi
+
+        # Extract drone routes
+        DRONE_ROUTES=$(echo "$OUTPUT" | grep "Drone routes:" -A 99999 | tail -n +2)
+        DRONE_ROUTES=$(echo "$DRONE_ROUTES" | tr '\n' ';' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+         if [ -z "$DRONE_ROUTES" ]; then
+          DRONE_ROUTES="N/A"
+        fi
+
+        # Combine routes
+        ROUTE="Truck: ${TRUCK_ROUTES} || Drone: ${DRONE_ROUTES}"
+
+        # Prepare CSV line
+        CSV_LINE="${DRONETYPE},${THOI_GIAN},\"${ROUTE}\",${JOB_NAME}"
+        echo "$CSV_LINE" >> results.csv
+
+    - name: Upload Results
       uses: actions/upload-artifact@v3
       with:
-        name: combined-results
-        path: all_results/combined_results.csv
+        name: results
+        path: results.csv
