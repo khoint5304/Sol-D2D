@@ -40,7 +40,7 @@ jobs:
         DATA_FILE="D2D Problem/random_data/${{ matrix.problem }}.txt"
         if [ -f "$DATA_FILE" ]; then
           echo "Data file $DATA_FILE found. Running the program..."
-          ./test.exe -dronetype "${{ matrix.dronetype }}" "${{ matrix.problem }}" | python3 aggregate_results.py
+          ./test.exe -dronetype "${{ matrix.dronetype }}" "${{ matrix.problem }}" | python3 summary.py
         else
           echo "Data file $DATA_FILE not found. Skipping program execution."
         fi
