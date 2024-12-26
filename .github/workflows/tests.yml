@@ -115,7 +115,7 @@ jobs:
 
             # Extract data row and add Dronetype and Job Name
             echo "Processing data from $file"
-            awk -F',' 'NR==2 {print ENVIRON["DRONETYPE"], $2, $3, ENVIRON["PROBLEM"]}' ENVIRON[PROBLEM]="${problem}" "$file" >> combined_results.csv
+            PROBLEM="${problem}" awk -F',' 'NR==2 {print ENVIRON["DRONETYPE"], $2, $3, ENVIRON["PROBLEM"]}' "$file" >> combined_results.csv
             echo "Appended data to combined_results.csv"
             echo "-------------------------"
           done
