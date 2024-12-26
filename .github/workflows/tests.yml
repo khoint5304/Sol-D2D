@@ -33,7 +33,8 @@ jobs:
      id: run_program
      run: |
        export DRONETYPE="${{ matrix.dronetype }}"
-       export GITHUB_JOB="${{ github.job }}"  # Sử dụng biến ngữ cảnh github.job
+       export GITHUB_JOB="${{ github.job }}"
+       export DATA_FILE="D2D Problem/random_data/${{ matrix.problem }}.txt" # Đảm bảo export biến này
        DATA_FILE="D2D Problem/random_data/${{ matrix.problem }}.txt"
        if [ -f "$DATA_FILE" ]; then
          echo "Data file $DATA_FILE found. Running the program..."

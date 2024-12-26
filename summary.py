@@ -30,23 +30,18 @@ def extract_data(output):
 if __name__ == "__main__":
     output = sys.stdin.read()
     dronetype = os.environ.get("DRONETYPE")
-    job_name = os.environ.get("GITHUB_JOB")
+    # job_name = os.environ.get("GITHUB_JOB") # Không cần thiết nếu dùng tên file
+    data_file = os.environ.get("DATA_FILE")
 
-    print(f"Debugging summary.py: GITHUB_JOB = '{job_name}'") # Thêm dòng này
-
-    if dronetype is None or job_name is None:
-        print("Error: DRONETYPE or GITHUB_JOB environment variable not set.")
+    if dronetype is None or data_file is None:
+        print("Error: DRONETYPE or DATA_FILE environment variable not set.")
         sys.exit(1)
 
     thoi_gian, truck_routes, drone_routes = extract_data(output)
     route = f"Truck: {truck_routes} || Drone: {drone_routes}"
 
-    # Extract dataset name from job_name
-    dataset_name_match = re.search(r"Solve D2D for (.*?) with", job_name)
-    if dataset_name_match:
-        dataset_name = dataset_name_match.group(1)
-    else:
-        dataset_name = "N/A"  # Or some default value
+    # Lấy tên file từ đường dẫn
+    file_name = os.path.basename(data_file)
 
     csv_file = "results.csv"
     file_exists = os.path.exists(csv_file)
@@ -54,7 +49,7 @@ if __name__ == "__main__":
     with open(csv_file, 'a', newline='') as csvfile:
         writer = csv.writer(csvfile)
         if not file_exists:
-            writer.writerow(["Dronetype", "Thoi Gian", "Route", "Job Name"])  # Write header if file is new
-        writer.writerow([dronetype, thoi_gian, route, dataset_name])
+            writer.writerow(["Dronetype", "Thoi Gian", "Route", "Job Name"])  # Header vẫn là Job Name
+        writer.writerow([dronetype, thoi_gian, route, file_name]) # Sử dụng file_name
 
     print(f"Data appended to {csv_file}")
