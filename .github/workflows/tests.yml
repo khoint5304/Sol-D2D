@@ -77,9 +77,9 @@ jobs:
             # Đường dẫn đến file results.csv
             results_file="$dir/results.csv"
 
-            # Đọc dữ liệu từ file, lọc bỏ dòng trống, và thêm thông tin
+            # Đọc dữ liệu từ file và thêm thông tin
             if [ -f "$results_file" ]; then
-              tail -n +2 "$results_file" | grep . | awk -v dt="${dronetype}" -v jn="Solve D2D for ${problem} with Dronetype ${dronetype}" '{print dt","$0","$jn}' >> combined_results.csv
+              tail -n +2 "$results_file" | awk -v dt="${dronetype}" -v jn="${job_name}" '{print dt","$0","jn}' >> combined_results.csv
             fi
           done
       - name: Upload Combined Results
