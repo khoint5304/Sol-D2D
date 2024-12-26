@@ -36,17 +36,25 @@ jobs:
       id: run_program
       run: |
         export DRONETYPE="${{ matrix.dronetype }}"
-        export GITHUB_JOB="${{ github.job }}"
+        export GITHUB_JOB="${{ github.job_name }}"
         DATA_FILE="D2D Problem/random_data/${{ matrix.problem }}.txt"
         if [ -f "$DATA_FILE" ]; then
           echo "Data file $DATA_FILE found. Running the program..."
-          ./test.exe -dronetype "${{ matrix.dronetype }}" "${{ matrix.problem }}" | python3 summary.py
+          ./test.exe -dronetype "${{ matrix.dronetype }}" "${{ matrix.problem }}" | python3 aggregate_results.py
         else
           echo "Data file $DATA_FILE not found. Skipping program execution."
         fi
 
-    - name: Upload Results
-      uses: actions/upload-artifact@v3
-      with:
-        name: results
-        path: results.csv
+  upload-results:
+    name: Upload Combined Results
+    runs-on: ubuntu-latest
+    needs: ga-test
+    steps:
+      - name: Checkout Repository (again)
+        uses: actions/checkout@v3
+
+      - name: Upload Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: combined-results
+          path: results.csv
