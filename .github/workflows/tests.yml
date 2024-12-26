@@ -79,7 +79,7 @@ jobs:
               # Đọc từng dòng và bỏ qua các dòng trống hoặc không hợp lệ
               tail -n +2 "$results_file" | while IFS= read -r line; do
                 # Kiểm tra nếu dòng hợp lệ (có ít nhất 2 dấu phẩy)
-                if [[ -n "$line" && "$(echo "$line" | grep -o ',' | wc -l)" -ge 2 ]]; then
+                if [[ -n "$line" && "$(echo "$line" | grep -o ',' | wc -l)" -ge 1 ]]; then
                   echo "${dronetype},${line},${problem}" >> combined_results.csv
                 fi
               done
