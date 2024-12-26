@@ -8,16 +8,18 @@ def extract_data(output):
     truck_routes = "N/A"
     drone_routes = "N/A"
 
+    # Tìm "Minimum completion time: xxxxxx"
     thoi_gian_match = re.search(r"Minimum completion time: (\S+)", output)
     if thoi_gian_match:
         thoi_gian = thoi_gian_match.group(1)
 
+    # Tìm truck_routes
     truck_routes_match = re.search(r"Truck routes:\n(.*?)\nDrone routes:", output, re.DOTALL)
     if truck_routes_match:
         truck_routes_raw = truck_routes_match.group(1).strip()
         truck_routes = "; ".join(line.strip() for line in truck_routes_raw.splitlines() if line.strip())
 
-    # Extract drone routes
+    # Tìm drone_routes
     drone_routes_match = re.search(r"Drone routes:\n(.*?)(?=$|\n)", output, re.DOTALL)
     if drone_routes_match:
         drone_routes_raw = drone_routes_match.group(1).strip()
@@ -25,8 +27,10 @@ def extract_data(output):
 
     return thoi_gian, truck_routes, drone_routes
 
+
 if __name__ == "__main__":
     output = sys.stdin.read()
+    
     dronetype = os.environ.get("DRONETYPE")
     data_file = os.environ.get("DATA_FILE")
 
@@ -37,15 +41,17 @@ if __name__ == "__main__":
     thoi_gian, truck_routes, drone_routes = extract_data(output)
     route = f"Truck: {truck_routes} || Drone: {drone_routes}"
 
-    # Lấy tên file từ đường dẫn
+    # File .txt gốc, ví dụ "10.10.1.txt"
     file_name = os.path.basename(data_file)
 
     csv_file = "results.csv"
     file_exists = os.path.exists(csv_file)
 
-    with open(csv_file, 'a', newline='') as csvfile:
-        writer = csv.writer(csvfile)
+    # newline='' + lineterminator='\n' giúp tránh sinh thêm dòng trống
+    with open(csv_file, 'a', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile, lineterminator='\n')
         if not file_exists:
+            # Đổi tên cột Job Name thành Problem
             writer.writerow(["Dronetype", "Thoi Gian", "Route", "Problem"])
         writer.writerow([dronetype, thoi_gian, route, file_name])
 
