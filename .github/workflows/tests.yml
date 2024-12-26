@@ -73,10 +73,10 @@ jobs:
             problem="${parts[0]}"
             dronetype="${parts[1]}"
             results_file="$dir/results.csv"
-            if [ -f "$results_file" ] && [ $(wc -l < "$results_file") -ge 2 ]; then
-              tail -n +2 "$results_file" | head -n -1 | awk -v dt="${dronetype}" -v pb="${problem}" '{print dt","$0","pb}' >> combined_results.csv
+            if [ -f "$results_file" ]; then
+              tail -n +2 "$results_file" | awk 'NF > 0' | awk -v dt="${dronetype}" -v pb="${problem}" '{print dt","$0","pb}' >> combined_results.csv
             else
-              echo "File $results_file does not exist or has insufficient lines. Skipping."
+              echo "File $results_file does not exist. Skipping."
             fi
           done
 
