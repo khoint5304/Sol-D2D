@@ -73,7 +73,6 @@ jobs:
             IFS="-" read -r -a parts <<< "${artifact_name#individual-results-}"
             problem="${parts[0]}"
             dronetype="${parts[1]}"
-            job_name="Solve D2D for ${problem} with Dronetype ${dronetype}"
 
             # Đường dẫn đến file results.csv
             results_file="$dir/results.csv"

@@ -8,12 +8,10 @@ def extract_data(output):
     truck_routes = "N/A"
     drone_routes = "N/A"
 
-    # Extract thời gian hoàn thiện
     thoi_gian_match = re.search(r"Minimum completion time: (\S+)", output)
     if thoi_gian_match:
         thoi_gian = thoi_gian_match.group(1)
 
-    # Extract truck routes
     truck_routes_match = re.search(r"Truck routes:\n(.*?)\nDrone routes:", output, re.DOTALL)
     if truck_routes_match:
         truck_routes_raw = truck_routes_match.group(1).strip()
@@ -30,7 +28,6 @@ def extract_data(output):
 if __name__ == "__main__":
     output = sys.stdin.read()
     dronetype = os.environ.get("DRONETYPE")
-    # job_name = os.environ.get("GITHUB_JOB") # Không cần thiết nếu dùng tên file
     data_file = os.environ.get("DATA_FILE")
 
     if dronetype is None or data_file is None:
@@ -49,7 +46,7 @@ if __name__ == "__main__":
     with open(csv_file, 'a', newline='') as csvfile:
         writer = csv.writer(csvfile)
         if not file_exists:
-            writer.writerow(["Dronetype", "Thoi Gian", "Route", "Job Name"])  # Header vẫn là Job Name
-        writer.writerow([dronetype, thoi_gian, route, file_name]) # Sử dụng file_name
+            writer.writerow(["Dronetype", "Thoi Gian", "Route", "Problem"])
+        writer.writerow([dronetype, thoi_gian, route, file_name])
 
     print(f"Data appended to {csv_file}")
