@@ -31,10 +31,18 @@ jobs:
     - name: Compile C++ Program
       run: |
         g++ -std=c++17 -O3 sol.cpp src/*.cpp -o test.exe
+        # In ra danh sách file để kiểm tra xem test.exe có được tạo ra không
+        ls -l test.exe
+
+    - name: Make test.exe Executable
+      run: chmod +x test.exe
 
     - name: Run Program and Capture Output
       id: run_program
       run: |
+        # Đảm bảo đang ở thư mục gốc để tìm thấy test.exe
+        pwd
+        ls -l
         DATA_FILE="D2D Problem/random_data/${{ matrix.problem }}.txt"
         if [ -f "$DATA_FILE" ]; then
           echo "Data file $DATA_FILE found. Running the program..."
