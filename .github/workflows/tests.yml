@@ -67,18 +67,22 @@ jobs:
           echo "Dronetype,Thoi Gian,Route,Job Name" > combined_results.csv
       - name: Combine Results
         run: |
-          find . -name "results.csv" -print0 | while IFS= read -r -d $'\0' file; do
-            # Lấy tên thư mục chứa file (tên artifact)
-            artifact_name=$(dirname "$file")
-            # Tách tên artifact
+          find . -maxdepth 1 -type d -name "individual-results-*" -print0 | while IFS= read -r -d $'\0' dir; do
+            # Lấy thông tin từ tên artifact (tên thư mục)
+            artifact_name=$(basename "$dir")
             IFS="-" read -r -a parts <<< "${artifact_name#individual-results-}"
             problem="${parts[0]}"
             dronetype="${parts[1]}"
             job_name="Solve D2D for ${problem} with Dronetype ${dronetype}"
 
-            # Đọc và thêm dữ liệu vào combined_results.csv
-            tail -n +2 "$file" | awk -v dt="${dronetype}" -v jn="${job_name}" '{print dt","$0","jn}' >> combined_results.csv
-          done          ' \;
+            # Đường dẫn đến file results.csv
+            results_file="$dir/results.csv"
+
+            # Đọc dữ liệu từ file và thêm thông tin
+            if [ -f "$results_file" ]; then
+              tail -n +2 "$results_file" | awk -v dt="${dronetype}" -v jn="${job_name}" '{print dt","$0","jn}' >> combined_results.csv
+            fi
+          done
       - name: Upload Combined Results
         uses: actions/upload-artifact@v3
         with:
