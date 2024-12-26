@@ -61,25 +61,30 @@ jobs:
           pattern: individual-results-*
           merge-artifacts: false
 
-      - name: Create Combined Results File with Header
-        run: |
-          echo "Dronetype,Thoi Gian,Route,Problem" > combined_results.csv
-
       - name: Combine Results
         run: |
+          # Tạo file kết quả tổng hợp
+          echo "Dronetype,Thoi Gian,Route,Problem" > combined_results.csv
+
+          # Duyệt qua tất cả các thư mục kết quả
           find . -maxdepth 1 -type d -name "individual-results-*" -print0 | while IFS= read -r -d $'\0' dir; do
             artifact_name=$(basename "$dir")
             IFS="-" read -r -a parts <<< "${artifact_name#individual-results-}"
             problem="${parts[0]}"
             dronetype="${parts[1]}"
             results_file="$dir/results.csv"
+
+            # Kiểm tra file kết quả và xử lý nội dung
             if [ -f "$results_file" ]; then
-              # Lọc và bỏ các dòng trống trước khi ghi vào file kết quả
-              tail -n +2 "$results_file" | awk 'NF > 0 {print}' | awk -v dt="${dronetype}" -v pb="${problem}" '{print dt","$0","pb}' >> combined_results.csv
+              # Loại bỏ header và các dòng trống, chỉ giữ lại dòng dữ liệu hợp lệ
+              tail -n +2 "$results_file" | awk 'NF > 0' | while IFS= read -r line; do
+                echo "${dronetype},${line},${problem}" >> combined_results.csv
+              done
             else
               echo "File $results_file does not exist. Skipping."
             fi
           done
+
 
       - name: Upload Combined Results
         uses: actions/upload-artifact@v3
