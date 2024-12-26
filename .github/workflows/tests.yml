@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         problem: ["10.10.1", "10.10.2", "10.10.3", "10.10.4"]
-        dronetype: ["1", "2", "3","4"]
+        dronetype: ["1", "2", "3", "4"]
 
     steps:
     - name: Checkout Repository
@@ -34,14 +34,12 @@ jobs:
       run: |
         export DRONETYPE="${{ matrix.dronetype }}"
         export GITHUB_JOB="${{ github.job }}"
-        export DATA_FILE="D2D Problem/random_data/${{ matrix.problem }}.txt" # Đảm bảo export biến này
-        DATA_FILE="D2D Problem/random_data/${{ matrix.problem }}.txt"
+        export DATA_FILE="D2D Problem/random_data/${{ matrix.problem }}.txt"
         if [ -f "$DATA_FILE" ]; then
           echo "Data file $DATA_FILE found. Running the program..."
           ./test.exe -dronetype "${{ matrix.dronetype }}" "${{ matrix.problem }}" | python3 summary.py
         else
           echo "Data file $DATA_FILE not found. Skipping program execution."
-        fi
     - name: Upload Individual Results
       uses: actions/upload-artifact@v3
       with:
@@ -60,26 +58,25 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           pattern: individual-results-*
-          merge-artifacts: false # Không merge, để mỗi artifact ở thư mục riêng
+          merge-artifacts: false
 
       - name: Create Combined Results File with Header
         run: |
-          echo "Dronetype,Thoi Gian,Route,Job Name" > combined_results.csv
+          echo "Dronetype,Thoi Gian,Route,Problem" > combined_results.csv
+
       - name: Combine Results
         run: |
           find . -maxdepth 1 -type d -name "individual-results-*" -print0 | while IFS= read -r -d $'\0' dir; do
-            # Lấy thông tin từ tên artifact (tên thư mục)
             artifact_name=$(basename "$dir")
             IFS="-" read -r -a parts <<< "${artifact_name#individual-results-}"
             problem="${parts[0]}"
             dronetype="${parts[1]}"
-            # Đường dẫn đến file results.csv
             results_file="$dir/results.csv"
-            # Đọc dữ liệu từ file và thêm thông tin
             if [ -f "$results_file" ]; then
-              tail -n +2 "$results_file" | awk -v dt="${dronetype}" -v jn="${job_name}" '{print dt","$0","jn}' >> combined_results.csv
+              tail -n +2 "$results_file" | head -n -1 | awk -v dt="${dronetype}" -v pb="${problem}" '{print dt","$0","pb}' >> combined_results.csv
             fi
           done
+
       - name: Upload Combined Results
         uses: actions/upload-artifact@v3
         with:
