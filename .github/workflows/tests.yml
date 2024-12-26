@@ -6,7 +6,7 @@ on:
 
 jobs:
   ga-test:
-    name: Solve D2D for ${{ matrix.problem }}
+    name: Solve D2D for ${{ matrix.problem }} - Drone ${{ matrix.dronetype }}
     runs-on: ubuntu-latest
 
     strategy:
@@ -30,15 +30,54 @@ jobs:
 
     - name: Compile C++ Program
       run: |
-        g++ -std=c++17 -O3 sol.cpp src/*.cpp -o test.exe
+        g++ -std=c++17  -O3 sol.cpp src/*.cpp -o test.exe
 
-    - name: Run Program
+    - name: Run Program and Save Result
       run: |
-        DATA_FILE="D2D Problem/random_data/${{ matrix.problem }}.txt"
+        PROBLEM_NAME="${{ matrix.problem }}"
+        DRONE_TYPE="${{ matrix.dronetype }}"
+        DATA_FILE="D2D Problem/random_data/${PROBLEM_NAME}.txt"
+        OUTPUT_FILE="result_${PROBLEM_NAME}_${DRONE_TYPE}.csv"
 
         if [ -f "$DATA_FILE" ]; then
-          echo "Data file $DATA_FILE found. Running the program..."
-          ./test.exe -dronetype "${{ matrix.dronetype }}" "${{ matrix.problem }}"
+          echo "Running program for $PROBLEM_NAME with drone type $DRONE_TYPE..."
+          ./test.exe -dronetype "$DRONE_TYPE" "$PROBLEM_NAME" > "$OUTPUT_FILE"
+          echo "Result saved to $OUTPUT_FILE"
         else
           echo "Data file $DATA_FILE not found. Skipping program execution."
+          echo "problem,dronetype,error" > "$OUTPUT_FILE"
+          echo "$PROBLEM_NAME,$DRONE_TYPE,data_file_not_found" >> "$OUTPUT_FILE"
         fi
+
+    - name: Upload Result Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: results
+        path: result_*.csv
+
+  aggregate-results:
+    name: Aggregate Results
+    needs: ga-test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Download All Artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: results
+        path: all_results
+
+    - name: Combine Results into Single CSV
+      run: |
+        cd all_results
+        header=$(head -n 1 *.csv) # Lấy header từ file đầu tiên
+        find . -name "*.csv" -print0 | xargs -0 cat >> combined_results.csv
+        # Xóa các dòng header trùng lặp (nếu có)
+        sed -i '1d' combined_results.csv
+        echo "$header" > temp.csv && cat combined_results.csv >> temp.csv && mv temp.csv combined_results.csv
+
+    - name: Upload Combined Results Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: combined-results
+        path: all_results/combined_results.csv
