@@ -70,18 +70,13 @@ jobs:
           find . -maxdepth 1 -type d -name "individual-results-*" -print0 | while IFS= read -r -d $'\0' dir; do
             artifact_name=$(basename "$dir")
             IFS="-" read -r -a parts <<< "${artifact_name#individual-results-}"
-            problem="${parts[0]}"
             dronetype="${parts[1]}"
             results_file="$dir/results.csv"
 
-            # Kiểm tra file tồn tại
             if [ -f "$results_file" ]; then
               # Đọc từng dòng và bỏ qua các dòng trống hoặc không hợp lệ
               tail -n +2 "$results_file" | while IFS= read -r line; do
-                # Kiểm tra nếu dòng hợp lệ (có ít nhất 2 dấu phẩy)
-                if [[ -n "$line" && "$(echo "$line" | grep -o ',' | wc -l)" -ge 1 ]]; then
-                  echo "${dronetype},${line},${problem}" >> combined_results.csv
-                fi
+                  echo "${dronetype},${line}" >> combined_results.csv
               done
             else
               echo "File $results_file does not exist. Skipping."
