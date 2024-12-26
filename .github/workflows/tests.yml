@@ -40,6 +40,7 @@ jobs:
           ./test.exe -dronetype "${{ matrix.dronetype }}" "${{ matrix.problem }}" | python3 summary.py
         else
           echo "Data file $DATA_FILE not found. Skipping program execution."
+        fi
     - name: Upload Individual Results
       uses: actions/upload-artifact@v3
       with:
@@ -72,8 +73,10 @@ jobs:
             problem="${parts[0]}"
             dronetype="${parts[1]}"
             results_file="$dir/results.csv"
-            if [ -f "$results_file" ]; then
+            if [ -f "$results_file" ] && [ $(wc -l < "$results_file") -ge 2 ]; then
               tail -n +2 "$results_file" | head -n -1 | awk -v dt="${dronetype}" -v pb="${problem}" '{print dt","$0","pb}' >> combined_results.csv
+            else
+              echo "File $results_file does not exist or has insufficient lines. Skipping."
             fi
           done
 
