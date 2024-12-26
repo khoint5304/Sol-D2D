@@ -6,7 +6,7 @@ on:
 
 jobs:
   ga-test:
-    name: Solve D2D for ${{ matrix.problem }} with Dronetype ${{ matrix.dronetype }}
+    name: Solve D2D for ${{ matrix.problem }}
     runs-on: ubuntu-latest
 
     strategy:
@@ -23,79 +23,18 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y g++ make
-
     - name: Setup Data Directories
       run: |
         mkdir -p "D2D Problem/random_data"
-
     - name: Compile C++ Program
       run: |
         g++ -std=c++17 -O3 sol.cpp src/*.cpp -o test.exe
-        # In ra danh sách file để kiểm tra xem test.exe có được tạo ra không
-        ls -l test.exe
-
-    - name: Make test.exe Executable
-      run: chmod +x test.exe
-
-    - name: Run Program and Capture Output
-      id: run_program
+    - name: Run Program
       run: |
-        # Đảm bảo đang ở thư mục gốc để tìm thấy test.exe
-        pwd
-        ls -l
         DATA_FILE="D2D Problem/random_data/${{ matrix.problem }}.txt"
         if [ -f "$DATA_FILE" ]; then
           echo "Data file $DATA_FILE found. Running the program..."
-          output=$("./test.exe -dronetype ${{ matrix.dronetype }} ${{ matrix.problem }}" 2>&1)
-          echo "OUTPUT_START<<EOF" >> $GITHUB_STEP_SUMMARY
-          echo "$output" >> $GITHUB_STEP_SUMMARY
-          echo "EOF" >> $GITHUB_STEP_SUMMARY
-          echo "output<<EOF" >> $GITHUB_OUTPUT
-          echo "$output" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          ./test.exe -dronetype "${{ matrix.dronetype }}" "${{ matrix.problem }}"
         else
           echo "Data file $DATA_FILE not found. Skipping program execution."
-          echo "output<<EOF" >> $GITHUB_OUTPUT
-          echo "Data file not found" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
         fi
-
-    - name: Extract Results and Append to CSV
-      if: steps.run_program.outputs.output != 'Data file not found'
-      run: |
-        OUTPUT="${{ steps.run_program.outputs.output }}"
-        DRONETYPE="${{ matrix.dronetype }}"
-        JOB_NAME="${{ github.job }}"
-
-        # Extract thời gian hoàn thiện
-        THOI_GIAN=$(echo "$OUTPUT" | grep "Minimum completion time:" | awk '{print $4}')
-        if [ -z "$THOI_GIAN" ]; then
-          THOI_GIAN="N/A"
-        fi
-
-        # Extract truck routes
-        TRUCK_ROUTES=$(echo "$OUTPUT" | sed -n '/Truck routes:/,/Drone routes:/p' | sed '1d;$d')
-        TRUCK_ROUTES=$(echo "$TRUCK_ROUTES" | tr '\n' ';' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-        if [ -z "$TRUCK_ROUTES" ]; then
-          TRUCK_ROUTES="N/A"
-        fi
-
-        # Extract drone routes
-        DRONE_ROUTES=$(echo "$OUTPUT" | grep "Drone routes:" -A 99999 | tail -n +2)
-        DRONE_ROUTES=$(echo "$DRONE_ROUTES" | tr '\n' ';' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-         if [ -z "$DRONE_ROUTES" ]; then
-          DRONE_ROUTES="N/A"
-        fi
-
-        # Combine routes
-        ROUTE="Truck: ${TRUCK_ROUTES} || Drone: ${DRONE_ROUTES}"
-
-        # Prepare CSV line
-        CSV_LINE="${DRONETYPE},${THOI_GIAN},\"${ROUTE}\",${JOB_NAME}"
-        echo "$CSV_LINE" >> results.csv
-
-    - name: Upload Results
-      uses: actions/upload-artifact@v3
-      with:
-        name: results
-        path: results.csv
