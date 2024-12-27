@@ -210,7 +210,7 @@ bool check_drone_feasibility(const Problem &problem, const Linear_Drone_Config &
     for (auto c : route)
     {
         // Nếu điểm c không droneable => fail
-        if (!problem.droneable[c - 1])
+        if (problem.droneable[c - 1])
             return false;
         w_total += problem.demand[c - 1];
     }
