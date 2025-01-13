@@ -133,14 +133,14 @@ double compute_truck_time(const Problem &problem, const TruckConfig &truckConfig
     for (int c : route)
     {
         double dist = truck_distance_manhattan(problem, current, c);
-        double travel_time = dist / truckConfig.maximum_velocity;
+        double travel_time = dist / truckConfig.truck_velocity;
         double service_time = problem.serviceTimeByTruck[c - 1];
         total_time += travel_time + service_time;
         current = c;
     }
     // Quay lại depot
     double dist_back = truck_distance_manhattan(problem, current, 1);
-    double travel_time_back = dist_back / truckConfig.maximum_velocity;
+    double travel_time_back = dist_back / truckConfig.truck_velocity;
     total_time += travel_time_back;
     return total_time;
 }
@@ -210,7 +210,7 @@ bool check_drone_feasibility(const Problem &problem, const Linear_Drone_Config &
     for (auto c : route)
     {
         // Nếu điểm c không droneable => fail
-        if (problem.droneable[c - 1])
+        if (!problem.droneable[c - 1])
             return false;
         w_total += problem.demand[c - 1];
     }
@@ -240,7 +240,7 @@ double compute_solution_time(const Problem &problem,
 
     // Tính thời gian cho từng drone
     // Ở đây tạm thời ta dùng 1 loại droneConfig => droneConfigs[0]
-    // Nếu muốn mỗi drone có config riêng, bạn có thể điều chỉnh logic tương tự
+    // Nếu muốn mỗi drone có config riêng, có thể điều chỉnh logic tương tự
     const auto &dconf = droneConfigs[0];
     for (auto &droute : ind.drone_routes)
     {
@@ -437,7 +437,7 @@ const Individual &selection_tournament(const vector<Individual> &population, int
 }
 
 // --------------------- Crossover (lai ghép) ---------------------
-// Thay vì cắt 1 truck-route + 1 drone-route như cũ, ta làm route-based:
+// Thay vì cắt 1 truck-route + 1 drone-route như cũ, làm route-based:
 //   - For each truck route i, lấy route i từ p1 hay p2 với tỉ lệ 50/50
 //   - For each drone route i, lấy route i từ p1 hay p2 với tỉ lệ 50/50
 // Sau đó xử lý trùng / thiếu khách hàng
@@ -621,51 +621,6 @@ void mutate(Individual &ind,
     }
 }
 
-// --------------------- del50 (loại 50% cá thể tệ nhất) ---------------------
-// void del50(vector<Individual> &population,
-//            int pop_size,
-//            const Problem &problem,
-//            int K,
-//            int D,
-//            const TruckConfig &truckConfig,
-//            const vector<Linear_Drone_Config> &droneConfigs,
-//            unordered_set<string> &population_set)
-// {
-//     sort(population.begin(), population.end(),
-//          [](const Individual &a, const Individual &b)
-//          {
-//              return a.total_time < b.total_time;
-//          });
-//     int remove_count = pop_size / 2;
-//     for (int i = 0; i < remove_count; i++)
-//     {
-//         population_set.erase(encode_solution(population.back()));
-//         population.pop_back();
-//     }
-
-//     // Tạo mới lại để bù cho đủ pop_size
-//     auto start = chrono::steady_clock::now();
-//     while ((int)population.size() < pop_size)
-//     {
-//         auto now = chrono::steady_clock::now();
-//         chrono::duration<double> el = now - start;
-//         if (el.count() > 1.0)
-//         {
-//             break;
-//         }
-//         Individual ind = create_random_individual(problem, K, D, truckConfig, droneConfigs, population_set, 0.5);
-//         if (ind.total_time < numeric_limits<double>::max())
-//         {
-//             population.push_back(ind);
-//         }
-//         else
-//         {
-//             break;
-//         }
-//     }
-// }
-
-// --------------------- solveGA ---------------------
 void solveGA(const Problem &problem,
              const TruckConfig &truckConfig,
              const vector<Linear_Drone_Config> &droneConfigs,
@@ -676,7 +631,6 @@ void solveGA(const Problem &problem,
              double mutation_rate)
 {
     signal(SIGINT, signal_handler_ga);
-    cout << 1 << endl;
     unordered_set<string> population_set;
     vector<Individual> population;
 
@@ -751,13 +705,6 @@ void solveGA(const Problem &problem,
             }
         }
         gen_no_improve++;
-
-        // Nếu quá 50 thế hệ không cải thiện => xóa 50% cá thể xấu nhất
-        // if (gen_no_improve > 50)
-        // {
-        //     del50(population, pop_size, problem, K, D, truckConfig, droneConfigs, population_set);
-        //     gen_no_improve = 0;
-        // }
 
         // Sắp xếp quần thể theo fitness
         sort(population.begin(), population.end(),

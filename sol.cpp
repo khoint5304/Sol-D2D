@@ -76,6 +76,7 @@ int main(int argc, char *argv[])
                     cout << c << " ";
                 cout << "\n";
             }
+            cout << global_result.best_solution[1].size() << endl;
         }
     }
     catch (const exception &e)

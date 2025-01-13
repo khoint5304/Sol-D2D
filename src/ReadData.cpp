@@ -22,13 +22,8 @@ TruckConfig TruckConfig::import_data()
     file >> data;
 
     TruckConfig config;
-    config.maximum_velocity = data["V_max (m/s)"];
+    config.truck_velocity = data["V_max (m/s)"];
     config.capacity = data["M_t (kg)"];
-    for (const auto &[key, value] : data["T (hour)"].items())
-    {
-        config.coefficients.push_back(value);
-    }
-
     return config;
 }
 

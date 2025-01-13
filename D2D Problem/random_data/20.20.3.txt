@@ -2,7 +2,7 @@ number_staff 2
 number_drone 2
 droneLimitationFightTime(s) 3600
 Customers 20 
-Coordinate X		 Coordinate Y 		Demand		OnlyServicedByStaff		 ServiceTimeByTruck(s)		 ServiceTimeByDrone(s)
+Coordinate X		 Coordinate Y 		Demand		CanBeServiceByDrone		 ServiceTimeByTruck(s)		 ServiceTimeByDrone(s)
 7344.748365841363	-115.4639619596244	0.03	0	60 	30
 -13709.209580651737	-9878.772417744636	0.09	1	60 	30
 15693.253831731901	10044.593038595076	0.1	1	60 	30

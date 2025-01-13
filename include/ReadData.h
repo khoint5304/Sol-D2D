@@ -22,9 +22,8 @@ struct Problem
 
 struct TruckConfig
 {
-    double maximum_velocity;
+    double truck_velocity;
     double capacity;
-    vector<double> coefficients;
 
     static TruckConfig import_data();
 };
