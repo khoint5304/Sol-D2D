@@ -20,7 +20,7 @@ def extract_data(output):
         truck_routes = "; ".join(line.strip() for line in truck_routes_raw.splitlines() if line.strip())
 
     # Extract drone routes
-    drone_routes_match = re.search(r"Drone routes:\n(.*?)(?=$|\n)", output, re.DOTALL)
+    drone_routes_match = re.search(r"Drone routes:\n([\s\S]+)", output, re.DOTALL)
     if drone_routes_match:
         drone_routes_raw = drone_routes_match.group(1).strip()
         drone_routes = "; ".join(line.strip() for line in drone_routes_raw.splitlines() if line.strip())
